@@ -76,8 +76,8 @@ def main():
                 stack.print()
                 continue
 
-            # Else
-            print("error")
+        # Else
+        print("error")
 
 
 if __name__ == '__main__':
