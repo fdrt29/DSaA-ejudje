@@ -43,49 +43,41 @@ class Stack(object):
 def main():
     stack = None
 
-    set_size_pattern = re.compile(r"^set_size (.+)\n")
-    push_pattern = re.compile(r"^push (.+)\n")
+    set_size_pattern = re.compile(r"^set_size ([+]?\d+)\n")  # positive nums in group
+    push_pattern = re.compile(r"^push ([^ ]+)\n")  # non-space chars in group
     pop_pattern = re.compile(r"^pop\n")
     print_pattern = re.compile(r"^print\n")
 
     for line in sys.stdin:
         if line == '\n' or line == '':
             continue
-        match = set_size_pattern.match(line)
-        if match is not None:
-            # Get size from match group
-            # 0 is whole match, 1 - first matching group
-            if re.match(r"[+\-]?\d+$", match.group(1)) is None:
-                print("error")
-                continue
-            try:
-                size = int(match.group(1))
-                if size < 0 or stack is not None:
-                    print("error")
-                    continue
-                else:
-                    stack = Stack(size)
-            except ValueError:
-                print("error")
-                continue
 
         if stack is None:
-            continue
-
-        match = push_pattern.match(line)
-        if match is not None:
-            if ' ' in match.group(1):
-                print("error")
+            match = set_size_pattern.match(line)
+            if match:
+                # Get size from match group
+                # 0 is whole match, 1 - first matching group
+                size = int(match.group(1))
+                stack = Stack(size)
                 continue
-            stack.push(match.group(1))
+        else:
+            match = push_pattern.match(line)
+            if match:
+                stack.push(match.group(1))
+                continue
 
-        match = pop_pattern.match(line)
-        if match is not None:
-            stack.pop()
+            match = pop_pattern.match(line)
+            if match:
+                stack.pop()
+                continue
 
-        match = print_pattern.match(line)
-        if match is not None:
-            stack.print()
+            match = print_pattern.match(line)
+            if match:
+                stack.print()
+                continue
+
+            # Else
+            print("error")
 
 
 if __name__ == '__main__':
