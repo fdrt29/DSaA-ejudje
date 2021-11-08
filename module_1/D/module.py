@@ -1,6 +1,6 @@
 import re
 import sys
-from collections import defaultdict
+from collections import defaultdict, deque
 
 
 class SortedSet:
@@ -8,7 +8,6 @@ class SortedSet:
         self.data = list()
 
     def add(self, value):
-        # TODO improve
         if value not in self.data:
             self.data.append(value)
             self.data.sort()
@@ -55,11 +54,12 @@ class Graph:
             return
 
         visited = {start_vertex_id}
-        visit_queue = [start_vertex_id]
+        visit_queue = deque()
+        visit_queue.append(start_vertex_id)
         yield start_vertex_id
 
         while visit_queue:
-            current = visit_queue.pop(0)
+            current = visit_queue.popleft()
 
             for neighbor in self.data[current]:
                 if neighbor not in visited:
