@@ -23,11 +23,7 @@ string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
 
-hunter_add_package(Boost COMPONENTS regex system)
-find_package(Boost CONFIG REQUIRED regex system)
-
-
-add_executable(${PROJECT_NAME} "module_1/main.cpp")
+add_executable(${PROJECT_NAME} module_2/B/m2_taskB.cpp)
 
 
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -35,7 +31,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   "$<INSTALL_INTERFACE:include>"
   )
 
-target_link_libraries(${PROJECT_NAME} Boost::system Boost::regex)
 
 install(TARGETS ${PROJECT_NAME}
   EXPORT "${PROJECT_NAME}-targets"
