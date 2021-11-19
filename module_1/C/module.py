@@ -94,3 +94,5 @@ if __name__ == '__main__':
         main()
     except BaseException:
         print("error")
+    else:
+        pass
