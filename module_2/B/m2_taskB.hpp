@@ -23,6 +23,7 @@ class IBinaryTree {
   virtual std::pair<K, V> Min() const = 0;
   virtual std::pair<K, V> Max() const = 0;
 };
+// TODO mb implement iterator
 
 template <class Key, class Value>
 class BinaryTree : IBinaryTree<Key, Value> {
@@ -53,10 +54,12 @@ class BinaryTree : IBinaryTree<Key, Value> {
 
     static Node *Max(Node *root) {
       Node *current = root;
-      while (not current->right) {
+      while (true) {
+        if (current->right == nullptr) {
+          return current;
+        }
         current = current->right;
       }
-      return current;
     }
 
     friend std::ostream &operator<<(std::ostream &out, const Node &node) {
@@ -242,10 +245,6 @@ class BinaryTree : IBinaryTree<Key, Value> {
   Node *root_;
 };
 
-//
-//
-// ----------- Text Interface --------------------------------------------------
-
 enum class Commands {
   Add,     //(K, V)
   Set,     //(K, V)
@@ -266,9 +265,12 @@ struct KeyValuePair {
 
 std::pair<Commands, KeyValuePair> ParseCommand(const std::string &str) {
   static const auto add_pattern = std::regex(R"(add ([+]?\d+) ([^ ]+)$)");
-  static const auto set_pattern = std::regex(R"(set ([+]?\d+) ([^ ]+)$)");
-  static const auto delete_pattern = std::regex(R"(delete ([+]?\d+)$)");
-  static const auto search_pattern = std::regex(R"(search ([+]?\d+) ([^ ]+)$)");
+  static const auto set_pattern =
+      std::regex(R"(set ([+]?\d+) ([^ ]+)$)");
+  static const auto delete_pattern =
+      std::regex(R"(delete ([+]?\d+)$)");
+  static const auto search_pattern =
+      std::regex(R"(search ([+]?\d+) ([^ ]+)$)");
   try {
     std::smatch matches;
     if (std::regex_match(str, matches, add_pattern)) {
@@ -345,28 +347,4 @@ void InteractWithBinTreeByTextCommands(std::istream &in, std::ostream &out) {
         break;
     }
   }
-}
-
-int main() {
-  InteractWithBinTreeByTextCommands(std::cin, std::cout);
-  //  static const auto add_pattern =
-  //      std::regex(R"(add ([+]?\d+) ([^ ]+)(\r\n|\r|\n))");
-  //  std::smatch matches;
-  //  std::regex_match(, matches, add_pattern);
-  //  int key = std::stoi(matches[1]);
-  //  BinaryTree<int, std::string> tree{};
-  //  tree.Add(5, "root");
-  //  tree.Add(2, "s");
-  //  tree.Add(3, "s");
-  //  tree.Add(7, "Hello from node");
-  //  tree.Add(6, "s");
-  //  tree.Add(11, "s");
-  //  tree.Add(10, "s");
-  //  tree.Add(4, "s");
-  //  std::cout << tree << std::endl;
-  //  tree.Delete(3);
-  //  auto val = tree.Search(3);
-  //  std::cout << tree << std::endl;
-
-  return 0;
 }

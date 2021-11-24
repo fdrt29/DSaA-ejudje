@@ -141,7 +141,7 @@ function(hunter_gate_self root version sha1 result)
   set("${result}" "${hunter_self}" PARENT_SCOPE)
 endfunction()
 
-# Set HUNTER_GATE_ROOT cmake variable to suitable value.
+# Set HUNTER_GATE_ROOT cmake variable to suitable Value.
 function(hunter_gate_detect_root)
   # Check CMake variable
   string(COMPARE NOTEQUAL "${HUNTER_ROOT}" "" not_empty)
