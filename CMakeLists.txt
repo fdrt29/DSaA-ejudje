@@ -23,9 +23,9 @@ HunterGate(
 
 project(ejudje)
 
-string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
-string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
-string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
+#string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
+#string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
+#string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
 
 hunter_add_package(GTest)
 find_package(GTest CONFIG REQUIRED)
@@ -33,13 +33,14 @@ find_package(GTest CONFIG REQUIRED)
 add_library(${PROJECT_NAME}-lib STATIC
   # enum your files and delete this comment
   module_2/B/m2_taskB.hpp
+  module_3/A/m3_taskA.cpp
   )
 
 #add_executable(demo
 #  ${CMAKE_CURRENT_SOURCE_DIR}/demo/main.cpp
 #  )
 
-add_executable(${PROJECT_NAME} module_2/B/m2_taskB.cpp)
+add_executable(${PROJECT_NAME} module_3/A/m3_taskA.cpp #[[module_3/exmpl/003640.cpp]] )
 
 
 target_include_directories(${PROJECT_NAME} PUBLIC

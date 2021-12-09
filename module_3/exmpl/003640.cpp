@@ -176,6 +176,7 @@ std::vector<Item> getWeightsCosts() {
         if (line.size() == 0) {
             continue;
         }
+        if (line == "end") break;
         if (getTwoUint64_t(line, weight, cost)) {
             items.push_back(Item(weight, cost));
         } else {
