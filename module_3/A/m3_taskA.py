@@ -23,7 +23,7 @@ class BackpackAlgorithm:
         # если можно использовать только первые i предметов
         memo = [[0] * (n_limit + 1) for _ in range(n + 1)]
         for i in range(1, n + 1):
-            for j in range(1, n_limit + 1):  # local limit
+            for j in range(0, n_limit + 1):  # local limit
                 if n_weights[i - 1] <= j:  # а влезает ли вообще предмет при данном лимите?
                     # стоимость больше если положить предмет или нет?
                     memo[i][j] = max(memo[i - 1][j], items[i - 1].cost + memo[i - 1][j - n_weights[i - 1]])
@@ -36,7 +36,7 @@ class BackpackAlgorithm:
         res_cost = memo[-1][-1]
         j = n_limit
         i = n
-        while i > 1 or j > 1:
+        while i > 0 or j > 0:
             if memo[i][j] == 0:
                 break
             if memo[i][j] != memo[i - 1][j]:
@@ -68,6 +68,9 @@ if __name__ == '__main__':
     for line in sys.stdin:
         if line == '\n' or line == '':
             continue
+
+        # if line == 'end\n':
+        #     break
 
         if not is_limit_initialized:
             try:
