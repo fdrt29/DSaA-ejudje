@@ -125,9 +125,9 @@ def prime_gen():
 if __name__ == '__main__':
     bl_filter = None
 
-    set_size_pattern = re.compile(r"^set ([+]?[1-9]\d+)\s([+]?\d+\.\d+)\n")  # 1st group - int, 2nd - float
-    add_pattern = re.compile(r"^add ([^ ]+)\n")  # non-space chars in group
-    search_pattern = re.compile(r"^search ([^ ]+)\n")
+    set_size_pattern = re.compile(r"^set\s([+]?[1-9]\d*)\s([+]?\d+\.\d+)\n")  # 1st group - int, 2nd - float
+    add_pattern = re.compile(r"^add\s([^ ]+)\n")  # non-space chars in group
+    search_pattern = re.compile(r"^search\s([^ ]+)\n")
     print_pattern = re.compile(r"^print\n")
 
     for line in sys.stdin:
@@ -143,8 +143,8 @@ if __name__ == '__main__':
                 print(bl_filter.size, bl_filter.hash_count)
                 continue
         else:
-            if line == "enn":
-                break
+            # if line == "end":
+            #     break
 
             match = add_pattern.match(line)
             if match:
