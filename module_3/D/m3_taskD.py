@@ -122,7 +122,7 @@ def prime_gen():
 
 # ----- Input handle: ----------------------------------------------------
 
-if __name__ == '__main__':
+def main():
     bl_filter = None
 
     set_size_pattern = re.compile(r"^set\s([+]?[1-9]\d*)\s([+]?\d+\.\d+)\n")  # 1st group - int, 2nd - float
@@ -139,7 +139,11 @@ if __name__ == '__main__':
             if match:
                 appr_el_num = int(match.group(1))
                 probability = float(match.group(2))
-                bl_filter = BloomFilter(appr_el_num, probability)
+                try:
+                    bl_filter = BloomFilter(appr_el_num, probability)
+                except BloomFilterError:
+                    print("error")
+                    continue
                 print(bl_filter.size, bl_filter.hash_count)
                 continue
         else:
@@ -167,3 +171,7 @@ if __name__ == '__main__':
 
         # Else
         print("error")
+
+
+if __name__ == '__main__':
+    main()
