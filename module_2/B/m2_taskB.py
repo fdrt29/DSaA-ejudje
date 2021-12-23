@@ -230,8 +230,8 @@ class SplayTree(BinaryTree):
 def main():
     tree = SplayTree()
 
-    add_pattern = re.compile(r"^add\s([+-]?\d*)\s([^ ]+)\n")  # 1st group - int, 2nd - non-space chars
-    set_pattern = re.compile(r"^set\s([+-]?\d*)\s([^ ]+)\n")
+    add_pattern = re.compile(r"^add\s([+-]?\d*)\s([^ ]+?|)\n")  # 1st group - int, 2nd - non-space chars
+    set_pattern = re.compile(r"^set\s([+-]?\d*)\s([^ ]+?|)\n")
     delete_pattern = re.compile(r"^delete\s([+-]?\d*)\n")
     search_pattern = re.compile(r"^search\s([+-]?\d*)\n")
 
@@ -263,7 +263,7 @@ def main():
         if match:
             key = int(match.group(1))
             x = tree.search(key)
-            st = '1 ' + x if x else '0'
+            st = '1 ' + x if x is not None else '0'
             print(st)
             continue
 
@@ -273,14 +273,20 @@ def main():
                 print(x[0], x[1])
             else:
                 print("error")
+            continue
         elif line == 'max\n':
             x = tree.max()
             if x:
                 print(x[0], x[1])
             else:
                 print("error")
-        elif line == "print\n":
+            continue
+        elif line == "print\n" or line == "print":
             print(*tree.level_str_generator(), sep='\n')
+            continue
+
+        # Else
+        print("error")
 
 
 if __name__ == '__main__':
