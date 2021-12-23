@@ -1,8 +1,11 @@
 import re
-from collections import Sequence
-
 import math
 import sys
+
+try:
+    from collections.abc import Sequence
+except ImportError:
+    from collections import Sequence
 
 
 # ----- Bitset { -------------------------------------------------------
@@ -18,19 +21,21 @@ class Bitset(Sequence):
         self.length = length
 
     def __getitem__(self, s):
-        try:
+        if isinstance(s, slice):
             start, stop, step = s.indices(len(self))
             results = []
             for position in range(start, stop, step):
                 pos = len(self) - position - 1
                 results.append(bool(self.value & (1 << pos)))
             return results
-        except Exception:
+        elif isinstance(s, int):
             pos = len(self) - s - 1
             return bool(self.value & (1 << pos))
+        else:
+            raise TypeError("Invalid argument type.")
 
     def __setitem__(self, s, value):
-        try:
+        if isinstance(s, slice):
             start, stop, step = s.indices(len(self))
             for position in range(start, stop, step):
                 pos = len(self) - position - 1
@@ -40,7 +45,7 @@ class Bitset(Sequence):
                     self.value &= ~(1 << pos)
             maximum_position = max((start + 1, stop, len(self)))
             self.length = maximum_position
-        except Exception:
+        elif isinstance(s, int):
             pos = len(self) - s - 1
             if value:
                 self.value |= (1 << pos)
@@ -48,6 +53,8 @@ class Bitset(Sequence):
                 self.value &= ~(1 << pos)
             if len(self) < pos:
                 self.length = pos
+        else:
+            raise TypeError("Invalid argument type.")
         return self
 
     def __str__(self):
@@ -77,11 +84,7 @@ class BloomFilter:
         if not self.hash_count:
             raise BloomFilterError
         self.bitset = Bitset(self.size)
-        self.primes = []
-        prime = prime_gen()
-        while len(self.primes) < self.hash_count:
-            self.primes.append(next(prime))
-
+        self.primes = get_prime_list(self.hash_count)
         self._indexes = self
 
     def f_hash(self, seed, key):
@@ -100,24 +103,39 @@ class BloomFilter:
     def __str__(self):
         return str(self.bitset)
 
-    def print(self, stream=sys.stdout):
-        print(str(self.bitset), file=stream)
-
 
 # ----- } End of Bloom Filter -------------------------------------------------
 
-def prime_gen():
-    dct = {}
-    a = 2
-    while True:
-        if a not in dct:
-            yield a
-            dct[a * a] = [a]
-        else:
-            for p in dct[a]:
-                dct.setdefault(p + a, []).append(p)
-            del dct[a]
-        a += 1
+def is_prime(prime_list, multiple_list, candidate):
+    limit = int(math.sqrt(candidate))
+    result = True
+    for pm, mul in zip(prime_list, multiple_list):
+        if pm > limit:
+            break
+        while mul < candidate:
+            mul += pm
+        if mul == candidate:
+            result = False
+            break
+    return result
+
+
+def get_prime_list(list_length):
+    if "primes" not in get_prime_list.__dict__:  # caching, analog of a static variable of function
+        get_prime_list.primes = [3]
+        get_prime_list.multiples = [3]  # multiple of the corresponding prime closest to the candidate
+    primes = get_prime_list.primes
+    multiples = get_prime_list.multiples
+    list_length -= 1  # 2 is not in the list of prime numbers
+    if list_length < len(primes):
+        return [2] + primes[:list_length]
+    candidate = 5
+    while len(primes) < list_length:
+        if is_prime(primes, multiples, candidate):
+            primes.append(candidate)
+            multiples.append(candidate)
+        candidate += 2
+    return [2] + primes
 
 
 # ----- Input handle: ----------------------------------------------------
@@ -147,9 +165,6 @@ def main():
                 print(bl_filter.size, bl_filter.hash_count)
                 continue
         else:
-            # if line == "end":
-            #     break
-
             match = add_pattern.match(line)
             if match:
                 key = int(match.group(1))
@@ -166,7 +181,6 @@ def main():
             match = print_pattern.match(line)
             if match:
                 print(str(bl_filter))
-                # bl_filter.print()
                 continue
 
         # Else
