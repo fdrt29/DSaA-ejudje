@@ -26,8 +26,6 @@ class BinaryTree:
         cur = self.root
         prev = None
         while cur and key != cur.key:
-            # if key == cur.key:
-            #     break
             prev = cur
             if key < cur.key:
                 cur = cur.left
@@ -120,6 +118,8 @@ class SplayTree(BinaryTree):
         self.rotate_right(x.parent)
 
     def splay(self, x: BinaryTree.Node):
+        if not self.root:
+            return
         while x.parent is not None:
             p = x.parent
             if p.parent is None:
@@ -174,27 +174,6 @@ class SplayTree(BinaryTree):
         inserted, _ = self._insert(BinaryTree.Node(key, value))
         return inserted
 
-    # def join(self, t: BinaryTree):
-    #     if t is None:
-    #         return self
-    #     x = super()._max(self.root)
-    #     self.splay(x)
-    #     self.root.right = t.root
-    #     t.root.parent = self.root
-    #     t.root = None
-    #
-    # def split(self, x: BinaryTree.Node):
-    #     self.splay(x)
-    #     if x.right:
-    #         tree2 = x.right
-    #         tree2.parent = None
-    #     else:
-    #         tree2 = None
-    #     tree1 = x
-    #     tree1.right = None
-    #     return tree1, tree2
-
-    # TODO check
     def delete(self, key):
         if self.root is None:
             return False
@@ -224,7 +203,7 @@ class SplayTree(BinaryTree):
             return True
         return False
 
-    def print_to(self, stream):
+    def str_gen(self):
         def visit_callback(node: BinaryTree.Node, level: int, is_next_level):
             st = ''
             if level != 0:
@@ -237,8 +216,8 @@ class SplayTree(BinaryTree):
                 st += str(node)
             else:
                 st += "_"
-            print(st, file=stream, end='')
-        levelorder_traversal(self.root, visit_callback)
+            return st
+        return levelorder_traversal(self.root, visit_callback)
 
 
 def levelorder_traversal(root, visit_callback):
@@ -248,19 +227,22 @@ def levelorder_traversal(root, visit_callback):
     level = 0
     is_next_level = True
     while queue:
+        have_not_none = False
         n = len(queue)  # There is only one whole level in queue now
-        if not [x for x in queue if x is not None]:
-            return
         for i in range(0, n):
             node = queue.popleft()
-            visit_callback(node, level, is_next_level)
+            yield visit_callback(node, level, is_next_level)
             if node:
+                if node.left or node.right:
+                    have_not_none = True
                 queue.append(node.left)
                 queue.append(node.right)
             else:
                 queue.append(None)
                 queue.append(None)
             is_next_level = False
+        if not have_not_none:
+            return
         level += 1
         is_next_level = True
 
@@ -268,10 +250,10 @@ def levelorder_traversal(root, visit_callback):
 def main():
     tree = SplayTree()
 
-    add_pattern = re.compile(r"^add\s([+]?[1-9]\d*)\s([^ ]+)\n")  # 1st group - int, 2nd - non-space chars
-    set_pattern = re.compile(r"^set\s([+]?[1-9]\d*)\s([^ ]+)\n")
-    delete_pattern = re.compile(r"^delete\s([+]?[1-9]\d*)\n")
-    search_pattern = re.compile(r"^search\s([+]?[1-9]\d*)\n")
+    add_pattern = re.compile(r"^add\s([+-]?\d*)\s([^ ]+)\n")  # 1st group - int, 2nd - non-space chars
+    set_pattern = re.compile(r"^set\s([+-]?\d*)\s([^ ]+)\n")
+    delete_pattern = re.compile(r"^delete\s([+-]?\d*)\n")
+    search_pattern = re.compile(r"^search\s([+-]?\d*)\n")
 
     for line in sys.stdin:
         if line == '\n' or line == '':
@@ -318,7 +300,7 @@ def main():
             else:
                 print("error")
         elif line == "print\n":
-            tree.print_to(sys.stdout)
+            print(*tree.str_gen(), sep='')
 
 
 if __name__ == '__main__':
