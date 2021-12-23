@@ -203,48 +203,28 @@ class SplayTree(BinaryTree):
             return True
         return False
 
-    def str_gen(self):
-        def visit_callback(node: BinaryTree.Node, level: int, is_next_level):
-            st = ''
-            if level != 0:
-                if is_next_level:
-                    st = '\n'
+    def level_str_generator(self):
+        queue = deque()
+        queue.append(self.root)
+        while queue:
+            have_not_none = False
+            n = len(queue)  # There is only one whole level in queue now
+            level = []
+            for _ in range(0, n):
+                node = queue.popleft()
+                st = str(node) if node else '_'
+                level.append(st)
+                if node:
+                    if node.left or node.right:
+                        have_not_none = True
+                    queue.append(node.left)
+                    queue.append(node.right)
                 else:
-                    st = ' '
-
-            if node is not None:
-                st += str(node)
-            else:
-                st += "_"
-            return st
-        return levelorder_traversal(self.root, visit_callback)
-
-
-def levelorder_traversal(root, visit_callback):
-    queue = deque()
-    queue.append(root)
-
-    level = 0
-    is_next_level = True
-    while queue:
-        have_not_none = False
-        n = len(queue)  # There is only one whole level in queue now
-        for i in range(0, n):
-            node = queue.popleft()
-            yield visit_callback(node, level, is_next_level)
-            if node:
-                if node.left or node.right:
-                    have_not_none = True
-                queue.append(node.left)
-                queue.append(node.right)
-            else:
-                queue.append(None)
-                queue.append(None)
-            is_next_level = False
-        if not have_not_none:
-            return
-        level += 1
-        is_next_level = True
+                    queue.append(None)
+                    queue.append(None)
+            yield " ".join(level)
+            if not have_not_none:
+                return
 
 
 def main():
@@ -300,7 +280,7 @@ def main():
             else:
                 print("error")
         elif line == "print\n":
-            print(*tree.str_gen(), sep='')
+            print(*tree.level_str_generator(), sep='\n')
 
 
 if __name__ == '__main__':

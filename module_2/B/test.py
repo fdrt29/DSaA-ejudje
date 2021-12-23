@@ -1,6 +1,7 @@
 import sys
 
 from m2_taskB import main
+# from module_2.examples.B import main
 
 if __name__ == '__main__':
     sys.stdout = open("output.txt", 'w')
