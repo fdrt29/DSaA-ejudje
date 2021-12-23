@@ -1,39 +1,46 @@
-
 import math
+import time
 
 
-def is_prime(prime_list, candidate):
+def is_prime(prime_list, multiple_list, candidate):
     limit = int(math.sqrt(candidate))
-    is_prm = True
-    for pm in prime_list:
-        if pm[0] > limit:
+    result = True
+    for pm, mul in zip(prime_list, multiple_list):
+        if pm > limit:
             break
-        while pm[1] < candidate:
-            pm[1] += pm[0]
-        if pm[1] == candidate:
-            is_prm = False
+        while mul < candidate:
+            mul += pm
+        if mul == candidate:
+            result = False
             break
-    return is_prm
+    return result
 
 
 def get_prime_list(list_length):
     if "primes" not in get_prime_list.__dict__:
-        get_prime_list.primes = [[3, 3]]  # analog of a static variable of function
-        # get_prime_list.multiples = [3]  # analog of a static variable of function
-    # TODO хранить делители в отдельном списке
+        get_prime_list.primes = [3]  # analog of a static variable of function
+        get_prime_list.multiples = [3]
     primes = get_prime_list.primes
-    # multiples = get_prime_list.multiples
-    if len(primes) < list_length:
+    multiples = get_prime_list.multiples
+    if list_length < len(primes):
         return primes[:list_length]
     candidate = 5
     while len(primes) < list_length:
-        if is_prime(primes, candidate):
-            primes.append([candidate, candidate])
-            # multiples.append(candidate)
+        if is_prime(primes, multiples, candidate):
+            primes.append(candidate)
+            multiples.append(candidate)
         candidate += 2
     return primes
 
 
-get_prime_list(1000)
+start = time.time()
+ls = get_prime_list(1000)
+end = time.time()
+print(end - start)
 
-print(get_prime_list(20))
+
+start = time.time()
+ls = get_prime_list(20)
+end = time.time()
+print(end - start)
+# print(get_prime_list(20))
