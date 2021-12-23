@@ -1,3 +1,4 @@
+import re
 import sys
 from collections import deque
 
@@ -37,18 +38,15 @@ class BinaryTree:
     def _insert(self, new: Node):
         cur, prev = self._search(new.key)
         if cur is not None:
-            return False, cur, prev
+            return False, cur
         new.parent = prev
         if prev is None:
             self.root = new
-            cur = self.root
         elif new.key < prev.key:
             prev.left = new
-            cur = new
         else:
             prev.right = new
-            cur = new
-        return True, cur, prev
+        return True, new
 
     @staticmethod
     def _min(x: Node):
@@ -154,41 +152,56 @@ class SplayTree(BinaryTree):
         self.splay(x)
         return x.key, x.value
 
-    def search(self, key):
+    def _splay_search(self, key):
         (x, prev) = super()._search(key)
         if x is not None:
             self.splay(x)
         else:
             self.splay(prev)
-        return x, prev
+        return x
+
+    def search(self, key):
+        x = self._splay_search(key)
+        return x.value if x else None
 
     def _insert(self, new: BinaryTree.Node):
-        inserted, cur, prev = super()._insert(new)
-        if inserted or cur is not None:
-            self.splay(cur)
-        return inserted, cur, prev
+        success, inserted = super()._insert(new)
+        if success or inserted is not None:
+            self.splay(inserted)
+        return success, inserted
 
     def insert(self, key, value):
-        inserted, _, _ = self._insert(BinaryTree.Node(key, value))
+        inserted, _ = self._insert(BinaryTree.Node(key, value))
         return inserted
 
-    def join(self, t: BinaryTree):
-        if self.root is None:
-            return t
-        if t.root is None:
-            return t
-
-    #     TODO finish join() or remove
+    # def join(self, t: BinaryTree):
+    #     if t is None:
+    #         return self
+    #     x = super()._max(self.root)
+    #     self.splay(x)
+    #     self.root.right = t.root
+    #     t.root.parent = self.root
+    #     t.root = None
+    #
+    # def split(self, x: BinaryTree.Node):
+    #     self.splay(x)
+    #     if x.right:
+    #         tree2 = x.right
+    #         tree2.parent = None
+    #     else:
+    #         tree2 = None
+    #     tree1 = x
+    #     tree1.right = None
+    #     return tree1, tree2
 
     # TODO check
     def delete(self, key):
         if self.root is None:
             return False
-        (x, prev) = self.search(key)
+        x = self._splay_search(key)
         if x is None:
             return False
         if x.left is None:
-            # TODO use self.setup_parent()
             self.root = x.right
             if self.root is not None:
                 self.root.parent = None
@@ -205,7 +218,7 @@ class SplayTree(BinaryTree):
     def set(self, key, value):
         if self.root is None:
             return False
-        x, prev = self.search(key)
+        x = self._splay_search(key)
         if x is not None:
             x.value = value
             return True
@@ -216,7 +229,6 @@ class SplayTree(BinaryTree):
             st = ''
             if level != 0:
                 if is_next_level:
-                    # print(file=stream) # \n
                     st = '\n'
                 else:
                     st = ' '
@@ -226,8 +238,6 @@ class SplayTree(BinaryTree):
             else:
                 st += "_"
             print(st, file=stream, end='')
-
-        # TODO проверить на лишний перенос строки
         levelorder_traversal(self.root, visit_callback)
 
 
@@ -239,28 +249,77 @@ def levelorder_traversal(root, visit_callback):
     is_next_level = True
     while queue:
         n = len(queue)  # There is only one whole level in queue now
+        if not [x for x in queue if x is not None]:
+            return
         for i in range(0, n):
             node = queue.popleft()
             visit_callback(node, level, is_next_level)
             if node:
-                if not queue and node.left is None and node.left is None:
-                    return
                 queue.append(node.left)
                 queue.append(node.right)
+            else:
+                queue.append(None)
+                queue.append(None)
             is_next_level = False
         level += 1
         is_next_level = True
 
 
-if __name__ == '__main__':
+def main():
     tree = SplayTree()
-    tree.insert(8, 10)
-    tree.insert(4, 14)
-    tree.insert(7, 15)
-    tree.set(8, 11)
-    tree.insert(3, 13)
-    tree.insert(5, 16)
-    tree.search(88)
-    tree.search(7)
-    tree.delete(5)
-    tree.print_to(sys.stdout)
+
+    add_pattern = re.compile(r"^add\s([+]?[1-9]\d*)\s([^ ]+)\n")  # 1st group - int, 2nd - non-space chars
+    set_pattern = re.compile(r"^set\s([+]?[1-9]\d*)\s([^ ]+)\n")
+    delete_pattern = re.compile(r"^delete\s([+]?[1-9]\d*)\n")
+    search_pattern = re.compile(r"^search\s([+]?[1-9]\d*)\n")
+
+    for line in sys.stdin:
+        if line == '\n' or line == '':
+            continue
+        match = add_pattern.match(line)
+        if match:
+            key = int(match.group(1))
+            if not tree.insert(key, match.group(2)):
+                print("error")
+            continue
+
+        match = set_pattern.match(line)
+        if match:
+            key = int(match.group(1))
+            if not tree.set(key, match.group(2)):
+                print("error")
+            continue
+
+        match = delete_pattern.match(line)
+        if match:
+            key = int(match.group(1))
+            if not tree.delete(key):
+                print("error")
+            continue
+
+        match = search_pattern.match(line)
+        if match:
+            key = int(match.group(1))
+            x = tree.search(key)
+            st = '1 ' + x if x else '0'
+            print(st)
+            continue
+
+        if line == 'min\n':
+            x = tree.min()
+            if x:
+                print(x[0], x[1])
+            else:
+                print("error")
+        elif line == 'max\n':
+            x = tree.max()
+            if x:
+                print(x[0], x[1])
+            else:
+                print("error")
+        elif line == "print\n":
+            tree.print_to(sys.stdout)
+
+
+if __name__ == '__main__':
+    main()
