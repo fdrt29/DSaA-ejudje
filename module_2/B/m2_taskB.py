@@ -52,13 +52,13 @@ class BinaryTree:
 
     @staticmethod
     def _min(x: Node):
-        while not x.left:
+        while x.left:
             x = x.left
         return x
 
     @staticmethod
     def _max(x: Node):
-        while not x.right:
+        while x.right:
             x = x.right
         return x
 
@@ -122,10 +122,13 @@ class SplayTree(BinaryTree):
         self.rotate_right(x.parent)
 
     def splay(self, x: BinaryTree.Node):
-        while x != self.root:
+        while x.parent is not None:
             p = x.parent
-            if p == self.root:
-                self.zig(x)
+            if p.parent is None:
+                if x == x.parent.left:
+                    self.rotate_right(p)
+                else:
+                    self.rotate_left(p)
                 continue
             g = p.parent
             if x == p.left and p == g.left:
@@ -169,6 +172,14 @@ class SplayTree(BinaryTree):
         inserted, _, _ = self._insert(BinaryTree.Node(key, value))
         return inserted
 
+    def join(self, t: BinaryTree):
+        if self.root is None:
+            return t
+        if t.root is None:
+            return t
+
+    #     TODO finish join() or remove
+
     # TODO check
     def delete(self, key):
         if self.root is None:
@@ -177,12 +188,13 @@ class SplayTree(BinaryTree):
         if x is None:
             return False
         if x.left is None:
+            # TODO use self.setup_parent()
             self.root = x.right
             if self.root is not None:
                 self.root.parent = None
         elif x.right is None:
             self.root = x.left
-            self.root.parent = x.left
+            self.root.parent = None
         else:
             self.root = super()._max(x.left)
             self.splay(self.root)
@@ -201,33 +213,22 @@ class SplayTree(BinaryTree):
 
     def print_to(self, stream):
         def visit_callback(node: BinaryTree.Node, level: int, is_next_level):
+            st = ''
             if level != 0:
                 if is_next_level:
-                    print(file=stream)
-                    out << std::endl
+                    # print(file=stream) # \n
+                    st = '\n'
                 else:
-                    out << " "
+                    st = ' '
 
             if node is not None:
-                out << *node
+                st += str(node)
             else:
-                out << "_"
-            # print(str(node), file=stream)
-
-
+                st += "_"
+            print(st, file=stream, end='')
 
         # TODO проверить на лишний перенос строки
         levelorder_traversal(self.root, visit_callback)
-
-    # TODO delete
-    #
-    # def print_to(self, stream):
-    #     if self.root is not None:
-    #         self._print_to(self.root, None, stream)
-    #
-    # def _print_to(self, node, parent_key, stream):
-    #     print(node.to_str(parent_key), file=stream)
-    #     self._print_to(node.left, parent_key)
 
 
 def levelorder_traversal(root, visit_callback):
@@ -239,22 +240,16 @@ def levelorder_traversal(root, visit_callback):
     while queue:
         n = len(queue)  # There is only one whole level in queue now
         for i in range(0, n):
-            node = queue.pop()
+            node = queue.popleft()
             visit_callback(node, level, is_next_level)
             if node:
-                queue.append(node.left)  # Also if == nullptr
+                if not queue and node.left is None and node.left is None:
+                    return
+                queue.append(node.left)
                 queue.append(node.right)
             is_next_level = False
         level += 1
         is_next_level = True
-
-    # while q:
-    #     node = q.popleft()
-    #     visit_callback(node)
-    #     if node.left:
-    #         q.append(node.left)
-    #     if node.right:
-    #         q.append(node.right)
 
 
 if __name__ == '__main__':
