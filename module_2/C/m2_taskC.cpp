@@ -7,17 +7,6 @@
 
 typedef int64_t key_type;
 typedef std::string val_type;
-template <typename... Args>
-std::string string_format(const std::string &format, Args... args) {
-  int size_s = std::snprintf(nullptr, 0, format.c_str(), args...) + 1;
-  if (size_s <= 0) {
-    throw std::runtime_error("Error during formatting.");
-  }
-  auto size = static_cast<size_t>(size_s);
-  auto buf = std::make_unique<char[]>(size);
-  std::snprintf(buf.get(), size, format.c_str(), args...);
-  return std::string{buf.get(), buf.get() + size - 1};
-}
 
 class MinHeap {  //  родитель всегда был меньше
   struct Node {
@@ -129,8 +118,9 @@ class MinHeap {  //  родитель всегда был меньше
       out << "_";
       return out;
     }
-    out << string_format("[%ld %s]", min_heap.heap[0].key,
-                         min_heap.heap[0].val.c_str());
+    out << "[" << min_heap.heap[0].key  //
+        << " " << min_heap.heap[0].val  //
+        << "]";                         //
 
     auto levels =
         static_cast<size_t>(std::log(min_heap.heap.size()) / std::log(2) + 1);
@@ -150,9 +140,10 @@ class MinHeap {  //  родитель всегда был меньше
         if (i >= min_heap.heap.size()) {
           out << "_";
         } else {
-          out << string_format("[%ld %s %ld]", min_heap.heap[i].key,
-                               min_heap.heap[i].val.c_str(),
-                               min_heap.heap[ParentI(i)].key);
+          out << "[" << min_heap.heap[i].key           //
+              << " " << min_heap.heap[i].val           //
+              << " " << min_heap.heap[ParentI(i)].key  //
+              << "]";
         }
         if (i != right) out << " ";
       }
@@ -258,7 +249,7 @@ void InteractWithDSByTextCommands(std::istream &in, std::ostream &out) {
         auto sch = min_heap.Search(args.Key);
         if (sch) {
           auto [i, val] = sch.value();
-          out << string_format("1 %li %s", i, val.c_str()) << std::endl;
+          out << "1 " << i << " " << val << std::endl;
         } else {
           out << "0" << std::endl;
         }
@@ -269,7 +260,7 @@ void InteractWithDSByTextCommands(std::istream &in, std::ostream &out) {
         auto min = min_heap.Min();
         if (min) {
           auto [key, i, val] = min.value();
-          out << string_format("%li %li %s", key, i, val.c_str()) << std::endl;
+          out << key << " " << i << " " << val << std::endl;
         } else
           error(out);
         break;
@@ -279,7 +270,7 @@ void InteractWithDSByTextCommands(std::istream &in, std::ostream &out) {
         auto max = min_heap.Max();
         if (max) {
           auto [key, i, val] = max.value();
-          out << string_format("%li %li %s", key, i, val.c_str()) << std::endl;
+          out << key << " " << i << " " << val << std::endl;
         } else
           error(out);
         break;
@@ -289,7 +280,7 @@ void InteractWithDSByTextCommands(std::istream &in, std::ostream &out) {
         auto root = min_heap.Extract();
         if (root) {
           auto [key, val] = root.value();
-          out << string_format("%li %s", key, val.c_str()) << std::endl;
+          out << key << " " << val << std::endl;
         } else
           error(out);
         break;
