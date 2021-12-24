@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_TESTS "Build tests" ON)
@@ -41,7 +41,7 @@ add_library(${PROJECT_NAME}-lib STATIC
 #  )
 
 add_executable(${PROJECT_NAME}
-  module_2/B/m2_taskB.hpp
+  module_2/C/m2_taskC.cpp
   #  module_3/exmpl/003640.cpp
   )
 

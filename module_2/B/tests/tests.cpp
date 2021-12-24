@@ -20,7 +20,7 @@ TEST(Example, EmptyTest) {
     std::ifstream in("./module_2/B/tests/data/I/" + std::to_string(i) + ".txt");
     EXPECT_TRUE(in.is_open());
     std::stringstream out;
-    InteractWithBinTreeByTextCommands(in, out);
+    InteractWithDSByTextCommands(in, out);
 
     std::ifstream expected("./module_2/B/tests/data/O/" + std::to_string(i) +
                            ".txt");
