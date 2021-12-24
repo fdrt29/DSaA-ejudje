@@ -34,8 +34,11 @@ class MinHeap {  //  родитель всегда был меньше
     }
   }
   void ShiftDown(size_t index) {
-    size_t i_min =
-        GetLeft(index) <= GetRight(index) ? LeftI(index) : RightI(index);
+    size_t i_min;
+    if (RightI(index) < heap.size() and GetRight(index) < GetLeft(index))
+      i_min = RightI(index);
+    else
+      i_min = LeftI(index);
     while (i_min < heap.size() and heap[index].key > heap[i_min].key) {
       Swap(index, i_min);
       index = i_min;
