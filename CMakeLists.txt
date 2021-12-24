@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_TESTS "Build tests" ON)
@@ -33,14 +33,17 @@ find_package(GTest CONFIG REQUIRED)
 add_library(${PROJECT_NAME}-lib STATIC
   # enum your files and delete this comment
   module_2/B/m2_taskB.hpp
-  module_3/A/m3_taskA.cpp
+#  module_3/A/m3_taskA.cpp
   )
 
 #add_executable(demo
 #  ${CMAKE_CURRENT_SOURCE_DIR}/demo/main.cpp
 #  )
 
-add_executable(${PROJECT_NAME} module_3/exmpl/003490.cpp )
+add_executable(${PROJECT_NAME}
+  module_2/C/m2_taskC.cpp
+  #  module_3/exmpl/003640.cpp
+  )
 
 
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -90,6 +93,8 @@ if(BUILD_DOCS)
 endif()
 
 set_target_properties(${PROJECT_NAME}-lib PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+
 
 install(TARGETS ${PROJECT_NAME}
   EXPORT "${PROJECT_NAME}-targets"
