@@ -28,7 +28,7 @@ def main():
         match = add_pattern.match(line)
         if match:
             key = int(match.group(1))
-            if not bin_heap.insert(key, match.group(2)):
+            if not bin_heap.Insert(key, match.group(2)):
                 print("error")
             continue
 

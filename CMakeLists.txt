@@ -33,7 +33,7 @@ find_package(GTest CONFIG REQUIRED)
 add_library(${PROJECT_NAME}-lib STATIC
   # enum your files and delete this comment
   module_2/B/m2_taskB.hpp
-#  module_3/A/m3_taskA.cpp
+  #  module_3/A/m3_taskA.cpp
   )
 
 #add_executable(demo
@@ -41,7 +41,8 @@ add_library(${PROJECT_NAME}-lib STATIC
 #  )
 
 add_executable(${PROJECT_NAME}
-  module_2/C/m2_taskC.cpp
+  module_2/D/m2_taskD.cpp
+  #  module_2/C/m2_taskC.cpp
   #  module_3/exmpl/003640.cpp
   )
 

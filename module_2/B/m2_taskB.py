@@ -170,7 +170,7 @@ class SplayTree(BinaryTree):
             self.splay(inserted)
         return success, inserted
 
-    def insert(self, key, value):
+    def Insert(self, key, value):
         inserted, _ = self._insert(BinaryTree.Node(key, value))
         return inserted
 
@@ -241,7 +241,7 @@ def main():
         match = add_pattern.match(line)
         if match:
             key = int(match.group(1))
-            if not tree.insert(key, match.group(2)):
+            if not tree.Insert(key, match.group(2)):
                 print("error")
             continue
 
