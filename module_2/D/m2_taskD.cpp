@@ -132,13 +132,22 @@ class CompressedTrie {
                                 uint max_mistake_count = 1) {
     std::set<std::string> results;
 
-    // TODO использовать очередь с приоритетом? log вставка в нее или итерация?
-    std::stack<std::pair<Node*, std::string>> stack;
-    stack.push(std::make_pair(root_, ""));
+    typedef std::tuple<int, Node*, std::string> el_type;
+    // min куча
+    auto cmp = [](const el_type& left, const el_type& right) {
+      return std::get<0>(left) > std::get<0>(right);
+    };
+    // Так как функция ищет и точное совпадение, то это ускоряет его
+    // поиск, взамен stack\queue. Кроме того было просто навязчивое желание
+    // использовать, изученное в курсе АиСД.
+    std::priority_queue<el_type, std::vector<el_type>, decltype(cmp)>
+        priority_queue(cmp);
 
-    while (not stack.empty()) {
-      auto [traverse_node, path] = stack.top();
-      stack.pop();
+    priority_queue.emplace(0, root_, "");
+
+    while (not priority_queue.empty()) {
+      auto [_, traverse_node, path] = priority_queue.top();
+      priority_queue.pop();
 
       for (auto& [ch, edge] : traverse_node->edges) {
         auto row =
@@ -153,7 +162,9 @@ class CompressedTrie {
         // If size are not equal, returned row is not last in the table.
         // The reason is optimization inside the DamerauLevenshtein() function.
         if (row[0] == path.length() + edge.label.length()) {
-          stack.push(std::make_pair(edge.node_on_end, path + edge.label));
+          // row.back as priority
+          priority_queue.emplace(row.back(), edge.node_on_end,
+                                 path + edge.label);
         }
       }
     }
