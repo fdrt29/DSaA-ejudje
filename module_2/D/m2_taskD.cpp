@@ -133,51 +133,6 @@ class CompressedTrie {
                                 uint max_mistake_count = 1) {
     std::set<std::string> results;
 
-    typedef std::tuple<int, Node*, std::string> el_type;
-    // min куча
-    auto cmp = [](const el_type& left, const el_type& right) {
-      return std::get<0>(left) > std::get<0>(right);
-    };
-    // Так как функция ищет и точное совпадение, то это ускоряет его
-    // поиск, взамен stack\queue. Кроме того было просто навязчивое желание
-    // использовать СД, изученную в курсе АиСД.
-    std::priority_queue<el_type, std::vector<el_type>, decltype(cmp)>
-        priority_queue(cmp);
-    priority_queue.emplace(0, root_, "");
-
-    while (not priority_queue.empty()) {
-      auto [_, traverse_node, path] = priority_queue.top();
-      priority_queue.pop();
-
-      for (auto& [ch, edge] : traverse_node->edges) {
-        auto current_path = path + edge.label;
-        auto row = DamerauLevenshtein(current_path, word, max_mistake_count);
-
-        // TODO внести под условие, что возвращенная строка последняя
-        if (row.back() == 0) {
-          return {current_path};
-        }
-        if (row.back() == max_mistake_count and edge.node_on_end->is_word_end) {
-          results.insert(current_path);
-        }
-        // If not equal, returned row is not last in the table.
-        // The reason is optimization inside the DamerauLevenshtein() function.
-        if (row[0] == path.length() + edge.label.length()) {
-          // Priority is 0 if label is substr of word. Otherwise, something
-          // cheap to compute.
-          priority_queue.emplace(priority(row, current_path), edge.node_on_end,
-                                 current_path);
-        }
-      }
-    }
-
-    return results;
-  }
-
-  std::set<std::string> SimilarOld(const std::string& word,
-                                uint max_mistake_count = 1) {
-    std::set<std::string> results;
-
     // TODO использовать очередь с приоритетом? log вставка в нее или итерация?
     std::stack<std::pair<Node*, std::string>> stack;
     stack.push(std::make_pair(root_, ""));
@@ -201,7 +156,7 @@ class CompressedTrie {
             results.insert(current_path);
           }
 
-          stack.push(std::make_pair(edge.node_on_end, path + edge.label));
+          stack.push(std::make_pair(edge.node_on_end, current_path));
         }
       }
     }
@@ -210,10 +165,6 @@ class CompressedTrie {
   }
 
  private:
-  static uint priority(const std::vector<uint>& row, const std::string& label) {
-    if (row[label.size()] == 0) return 0;  // label is prefix of word
-    return row.back();
-  }
   // Returns last row of Damerau-Levenshtein table or last row that have value
   // <=1.
   static std::vector<uint> DamerauLevenshtein(const std::string& str1,
@@ -289,20 +240,7 @@ void InteractWithTextCommands(std::istream& in, std::ostream& out) {
 
     std::transform(line.begin(), line.end(), line.begin(),
                    [](unsigned char c) { return std::tolower(c); });
-
-    auto start = std::chrono::high_resolution_clock::now();
-    std::set<std::string> res = trie.SimilarOld(line);
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration =
-        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Old: " << duration.count() << std::endl;
-
-    start = std::chrono::high_resolution_clock::now();
-    res = trie.Similar(line);
-    stop = std::chrono::high_resolution_clock::now();
-    duration =
-        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Priority Queue: " << duration.count() << std::endl;
+    std::set<std::string> res = trie.Similar(line);
 
     if (res.empty()) {
       std::cout << line << " - ?" << std::endl;
