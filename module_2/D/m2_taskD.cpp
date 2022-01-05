@@ -8,9 +8,6 @@
 #include <unordered_map>
 #include <vector>
 
-typedef int64_t key_type;
-typedef std::string val_type;
-
 size_t MatchEndPosition(std::string what, std::string where) {
   auto itr_what = what.begin();
   auto itr_where = where.begin();
@@ -24,7 +21,7 @@ size_t MatchEndPosition(std::string what, std::string where) {
   return res++;  // res points to next after match end
 }
 
-class CompressedTrie {
+class RadixTrie {
   struct Node;
   struct Edge {
     std::string label;
@@ -44,7 +41,7 @@ class CompressedTrie {
   };
 
  public:
-  ~CompressedTrie() { delete root_; }
+  ~RadixTrie() { delete root_; }
 
  public:
   void Insert(std::string word) {
@@ -129,8 +126,21 @@ class CompressedTrie {
     }
   }
 
-  std::set<std::string> Similar(const std::string& word,
-                                uint max_mistake_count = 1) {
+  /* Сложность по времени: О(k*n), k - длина искомого слова, n - число узлов в
+   * Radix Trie. Для каждого узла, имеющего расстояние 1 хотя бы между 2
+   * префиксами искомого слова и метки, проверяем всех его детей. В худшем
+   * случае придется пройти по всем узлам: каждый узел будет содержать только
+   * одну букву искомого слова и иметь ребенка, удовлетворяющего названному выше
+   * условию. Для каждого узла будет рассчитано расстояние Дамерау-Левенштейна
+   * за О(k*С). С - константа.
+   *
+   * Сложность по памяти: О(n+k). О(k) для Дамерау-Левенштейна + память на стек
+   * O(n), в который поместятся все узлы в худшем случае: корень имеет n ребер,
+   * каждое из которых подходит.
+   * */
+  /// @return Exact match or otherwise similar words
+  std::set<std::string> FuzzySearch(const std::string& word,
+                                    uint max_mistake_count = 1) {
     std::set<std::string> results;
 
     // TODO использовать очередь с приоритетом? log вставка в нее или итерация?
@@ -140,18 +150,19 @@ class CompressedTrie {
     while (not stack.empty()) {
       auto [traverse_node, path] = stack.top();
       stack.pop();
-
+      // Traverse node have valid distance, check its children
       for (auto& [ch, edge] : traverse_node->edges) {
         auto current_path = path + edge.label;
-        auto row = DamerauLevenshtein(current_path, word, max_mistake_count);
+        auto o_dist =
+            TryDamerauLevenshtein(current_path, word, max_mistake_count);
 
-        // If not equal, returned row is not last in the table.
+        // If not true, returned row is not last in the table.
         // The reason is optimization inside the DamerauLevenshtein() function.
-        if (row[0] == path.length() + edge.label.length()) {
-          if (row.back() == 0 and edge.node_on_end->is_word_end) {
+        if (o_dist.has_value()) {
+          if (o_dist.value() == 0 and edge.node_on_end->is_word_end) {
             return {current_path};
           }
-          if (row.back() == max_mistake_count and
+          if (o_dist.value() == max_mistake_count and
               edge.node_on_end->is_word_end) {
             results.insert(current_path);
           }
@@ -165,11 +176,15 @@ class CompressedTrie {
   }
 
  private:
-  // Returns last row of Damerau-Levenshtein table or last row that have value
-  // <=1.
-  static std::vector<uint> DamerauLevenshtein(const std::string& str1,
-                                              const std::string& str2,
-                                              uint max_mistake_count = 1) {
+  /* Сложность по времени: O(k*l). k на инициализацию, k*l итераций по таблице
+   * в худшем случае. k - длина искомого слова, l - длина метки ребра
+   *
+   * Сложность по памяти: О(3(k+1))=O(k). Храним 3 строки
+   * таблицы, длина которых = длине k искомого слова.
+   * */
+  static std::optional<uint> TryDamerauLevenshtein(const std::string& str1,
+                                                   const std::string& str2,
+                                                   uint max_mistake_count = 1) {
     auto n = str1.length() + 1;
     auto m = str2.length() + 1;
 
@@ -194,7 +209,7 @@ class CompressedTrie {
 
         if (i > 1 && j > 1 && str1[i - 1] == str2[j - 2] &&
             str1[i - 2] == str2[j - 1]) {
-          // transposition
+          // Transposition
           current[j] = std::min(current[j], pre_previous[j - 2] + cost);
         }
         if (not curr_has_valid_mistakes_count and
@@ -203,14 +218,14 @@ class CompressedTrie {
       }
       // Optimisation.
       if (not curr_has_valid_mistakes_count and prev_has_valid_mistakes_count)
-        return previous;
+        return std::nullopt;  // Early termination of algorithm
 
       pre_previous = previous;
       previous = current;
       prev_has_valid_mistakes_count = curr_has_valid_mistakes_count;
     }
 
-    return previous;
+    return previous.back();
   }
 
  private:
@@ -222,7 +237,7 @@ class CompressedTrie {
 // ----------- Text Interface --------------------------------------------------
 
 void InteractWithTextCommands(std::istream& in, std::ostream& out) {
-  CompressedTrie trie{};
+  RadixTrie trie{};
   std::string line;
 
   key_t n = 0;
@@ -240,7 +255,7 @@ void InteractWithTextCommands(std::istream& in, std::ostream& out) {
 
     std::transform(line.begin(), line.end(), line.begin(),
                    [](unsigned char c) { return std::tolower(c); });
-    std::set<std::string> res = trie.Similar(line);
+    std::set<std::string> res = trie.FuzzySearch(line);
 
     if (res.empty()) {
       std::cout << line << " - ?" << std::endl;
