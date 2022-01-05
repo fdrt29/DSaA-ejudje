@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <numeric>
 #include <queue>
@@ -173,6 +174,39 @@ class CompressedTrie {
     return results;
   }
 
+  std::set<std::string> SimilarOld(const std::string& word,
+                                   uint max_mistake_count = 1) {
+    std::set<std::string> results;
+
+    // TODO использовать очередь с приоритетом? log вставка в нее или итерация?
+    std::stack<std::pair<Node*, std::string>> stack;
+    stack.push(std::make_pair(root_, ""));
+
+    while (not stack.empty()) {
+      auto [traverse_node, path] = stack.top();
+      stack.pop();
+
+      for (auto& [ch, edge] : traverse_node->edges) {
+        auto row =
+            DamerauLevenshtein(path + edge.label, word, max_mistake_count);
+
+        if (row.back() == 0) {
+          return {path + edge.label};
+        }
+        if (row.back() == max_mistake_count and edge.node_on_end->is_word_end) {
+          results.insert(path + edge.label);
+        }
+        // If size are not equal, returned row is not last in the table.
+        // The reason is optimization inside the DamerauLevenshtein() function.
+        if (row[0] == path.length() + edge.label.length()) {
+          stack.push(std::make_pair(edge.node_on_end, path + edge.label));
+        }
+      }
+    }
+
+    return results;
+  }
+
  private:
   static uint priority(const std::vector<uint>& row, const std::string& label) {
     if (row[label.size()] == 0) return 0;  // label is prefix of word
@@ -250,10 +284,25 @@ void InteractWithTextCommands(std::istream& in, std::ostream& out) {
 
   while (std::getline(in, line)) {
     if (line.empty()) continue;
+    if (line == "end") continue; // TODO delete
 
     std::transform(line.begin(), line.end(), line.begin(),
                    [](unsigned char c) { return std::tolower(c); });
-    std::set<std::string> res = trie.Similar(line);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    std::set<std::string> res = trie.SimilarOld(line);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    std::cout << "Old: " << duration.count() << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
+    res = trie.Similar(line);
+    stop = std::chrono::high_resolution_clock::now();
+    duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    std::cout << "Priority Queue: " << duration.count() << std::endl;
+
     if (res.empty()) {
       std::cout << line << " - ?" << std::endl;
       continue;
