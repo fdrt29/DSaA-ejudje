@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-size_t MatchEndPosition(std::string what, std::string where) {
+size_t MatchEndPosition(std::wstring what, std::wstring where) {
   auto itr_what = what.begin();
   auto itr_where = where.begin();
   size_t res = 0;
@@ -17,20 +17,20 @@ size_t MatchEndPosition(std::string what, std::string where) {
     itr_what++;
     itr_where++;
   }
-  return res++;  // res points to next after match end
+  return res;  // res points to next after match end
 }
 
 class RadixTrie {
   struct Node;
   struct Edge {
-    std::string label;
+    std::wstring label;
     Node* node_on_end;
   };
   struct Node {
     explicit Node(bool word_end) : is_word_end(word_end), edges() {}
     bool is_word_end = false;
     // Store as key first char, whole label stored in value with ptr
-    std::unordered_map<char, Edge> edges;
+    std::unordered_map<wchar_t, Edge> edges;
 
     ~Node() {
       for (auto const& el : edges) {
@@ -54,7 +54,7 @@ class RadixTrie {
    * По памяти: O(1) - не зависит от входа. Вставляется 0-2 узла,
    * когда найдено место.
    * */
-  void Insert(std::string word) {
+  void Insert(std::wstring word) {
     Node* traverse_node = root_;
 
     while (true) {
@@ -140,13 +140,13 @@ class RadixTrie {
    * каждое из которых подходит.
    * */
   /// @return Exact match or otherwise similar words
-  std::set<std::string> FuzzySearch(const std::string& word,
-                                    uint max_mistake_count = 1) {
-    std::set<std::string> results;
+  std::set<std::wstring> FuzzySearch(const std::wstring& word,
+                                     uint max_mistake_count = 1) {
+    std::set<std::wstring> results;
 
     // TODO использовать очередь с приоритетом? log вставка в нее или итерация?
-    std::stack<std::pair<Node*, std::string>> stack;
-    stack.push(std::make_pair(root_, ""));
+    std::stack<std::pair<Node*, std::wstring>> stack;
+    stack.push(std::make_pair(root_, L""));
 
     while (not stack.empty()) {
       auto [traverse_node, path] = stack.top();
@@ -184,8 +184,8 @@ class RadixTrie {
    * Сложность по памяти: О(3(k+1))=O(k). Храним 3 строки
    * таблицы, длина которых ~ длине k искомого слова.
    * */
-  static std::optional<uint> TryDamerauLevenshtein(const std::string& str1,
-                                                   const std::string& str2,
+  static std::optional<uint> TryDamerauLevenshtein(const std::wstring& str1,
+                                                   const std::wstring& str2,
                                                    uint max_mistake_count = 1) {
     auto n = str1.length() + 1;
     auto m = str2.length() + 1;
@@ -238,47 +238,56 @@ class RadixTrie {
 //
 // ----------- Text Interface --------------------------------------------------
 
-void InteractWithTextCommands(std::istream& in, std::ostream& out) {
-  RadixTrie trie{};
-  std::string line;
+std::wstring tolower(const std::wstring& str) {
+  std::wstring res;
+  for (const auto& ch : str) {
+    res.push_back(std::tolower(ch, std::locale()));
+  }
+  return res;
+}
 
-  key_t n = 0;
-  std::cin >> n;
-  std::cin.ignore();
+void InteractWithTextCommands(std::wistream& in, std::wostream& out) {
+  RadixTrie trie{};
+  std::wstring line;
+
+  std::locale::global(std::locale(""));
+  in.imbue(std::locale());
+  out.imbue(std::locale());
+
+  auto n = 0;
+  std::wcin >> n;
+  std::wcin.ignore();
   for (int i = 0; i < n; ++i) {
-    std::getline(std::cin, line);
-    std::transform(line.begin(), line.end(), line.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-    trie.Insert(line);
+    std::getline(std::wcin, line);
+    trie.Insert(tolower(line));
   }
 
   while (std::getline(in, line)) {
     if (line.empty()) continue;
 
-    std::transform(line.begin(), line.end(), line.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-    std::set<std::string> res = trie.FuzzySearch(line);
+    std::wstring lower_line = tolower(line);
+    std::set<std::wstring> res = trie.FuzzySearch(lower_line);
 
     if (res.empty()) {
-      std::cout << line << " -?" << std::endl;
+      std::wcout << line << " -?" << std::endl;
       continue;
     }
-    if (res.find(line) != res.end()) {
-      std::cout << line << " - ok" << std::endl;
+    if (res.find(lower_line) != res.end()) {
+      std::wcout << line << " - ok" << std::endl;
     } else {
-      std::cout << line << " -> ";
+      std::wcout << line << " -> ";
       auto i = 0;
       for (const auto& w : res) {
-        if (i != 0) std::cout << ", ";
-        std::cout << w;
+        if (i != 0) std::wcout << ", ";
+        std::wcout << w;
         i++;
       }
-      std::cout << std::endl;
+      std::wcout << std::endl;
     }
   }
 }
 
 int main() {
-  InteractWithTextCommands(std::cin, std::cout);
+  InteractWithTextCommands(std::wcin, std::wcout);
   return 0;
 }
