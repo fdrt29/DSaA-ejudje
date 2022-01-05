@@ -139,10 +139,9 @@ class CompressedTrie {
     };
     // Так как функция ищет и точное совпадение, то это ускоряет его
     // поиск, взамен stack\queue. Кроме того было просто навязчивое желание
-    // использовать, изученное в курсе АиСД.
+    // использовать СД, изученную в курсе АиСД.
     std::priority_queue<el_type, std::vector<el_type>, decltype(cmp)>
         priority_queue(cmp);
-
     priority_queue.emplace(0, root_, "");
 
     while (not priority_queue.empty()) {
@@ -150,21 +149,23 @@ class CompressedTrie {
       priority_queue.pop();
 
       for (auto& [ch, edge] : traverse_node->edges) {
-        auto row =
-            DamerauLevenshtein(path + edge.label, word, max_mistake_count);
+        auto current_path = path + edge.label;
+        auto row = DamerauLevenshtein(current_path, word, max_mistake_count);
 
+        // TODO внести под условие, что возвращенная строка последняя
         if (row.back() == 0) {
-          return {path + edge.label};
+          return {current_path};
         }
         if (row.back() == max_mistake_count and edge.node_on_end->is_word_end) {
-          results.insert(path + edge.label);
+          results.insert(current_path);
         }
-        // If size are not equal, returned row is not last in the table.
+        // If not equal, returned row is not last in the table.
         // The reason is optimization inside the DamerauLevenshtein() function.
         if (row[0] == path.length() + edge.label.length()) {
-          // row.back as priority
-          priority_queue.emplace(row.back(), edge.node_on_end,
-                                 path + edge.label);
+          // Priority is 0 if label is substr of word. Otherwise, something
+          // cheap to compute.
+          priority_queue.emplace(priority(row, current_path), edge.node_on_end,
+                                 current_path);
         }
       }
     }
@@ -173,6 +174,10 @@ class CompressedTrie {
   }
 
  private:
+  static uint priority(const std::vector<uint>& row, const std::string& label) {
+    if (row[label.size()] == 0) return 0;  // label is prefix of word
+    return row.back();
+  }
   // Returns last row of Damerau-Levenshtein table or last row that have value
   // <=1.
   static std::vector<uint> DamerauLevenshtein(const std::string& str1,
@@ -186,6 +191,7 @@ class CompressedTrie {
     std::vector<uint> previous(m);
     std::iota(previous.begin(), previous.end(), 0);
 
+    bool prev_has_valid_mistakes_count = false;
     for (auto i = 1; i < n; i++) {
       std::vector<uint> current(m);
       current[0] = i;
@@ -208,10 +214,13 @@ class CompressedTrie {
             current[j] <= max_mistake_count)
           curr_has_valid_mistakes_count = true;
       }
+      // Optimisation.
+      if (not curr_has_valid_mistakes_count and prev_has_valid_mistakes_count)
+        return previous;
+
       pre_previous = previous;
       previous = current;
-      // Optimisation.
-      if (not curr_has_valid_mistakes_count) return previous;
+      prev_has_valid_mistakes_count = curr_has_valid_mistakes_count;
     }
 
     return previous;
