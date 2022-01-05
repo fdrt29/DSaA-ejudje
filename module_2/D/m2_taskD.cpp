@@ -2,7 +2,6 @@
 #include <chrono>
 #include <iostream>
 #include <numeric>
-#include <queue>
 #include <set>
 #include <stack>
 #include <unordered_map>
@@ -258,7 +257,7 @@ void InteractWithTextCommands(std::istream& in, std::ostream& out) {
     std::set<std::string> res = trie.FuzzySearch(line);
 
     if (res.empty()) {
-      std::cout << line << " - ?" << std::endl;
+      std::cout << line << " -?" << std::endl;
       continue;
     }
     if (res.find(line) != res.end()) {
