@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <numeric>
 #include <queue>
@@ -141,18 +142,20 @@ class CompressedTrie {
       stack.pop();
 
       for (auto& [ch, edge] : traverse_node->edges) {
-        auto row =
-            DamerauLevenshtein(path + edge.label, word, max_mistake_count);
+        auto current_path = path + edge.label;
+        auto row = DamerauLevenshtein(current_path, word, max_mistake_count);
 
-        if (row.back() == 0) {
-          return {path + edge.label};
-        }
-        if (row.back() == max_mistake_count and edge.node_on_end->is_word_end) {
-          results.insert(path + edge.label);
-        }
-        // If size are not equal, returned row is not last in the table.
+        // If not equal, returned row is not last in the table.
         // The reason is optimization inside the DamerauLevenshtein() function.
         if (row[0] == path.length() + edge.label.length()) {
+          if (row.back() == 0 and edge.node_on_end->is_word_end) {
+            return {current_path};
+          }
+          if (row.back() == max_mistake_count and
+              edge.node_on_end->is_word_end) {
+            results.insert(current_path);
+          }
+
           stack.push(std::make_pair(edge.node_on_end, path + edge.label));
         }
       }
@@ -175,6 +178,7 @@ class CompressedTrie {
     std::vector<uint> previous(m);
     std::iota(previous.begin(), previous.end(), 0);
 
+    bool prev_has_valid_mistakes_count = false;
     for (auto i = 1; i < n; i++) {
       std::vector<uint> current(m);
       current[0] = i;
@@ -197,10 +201,13 @@ class CompressedTrie {
             current[j] <= max_mistake_count)
           curr_has_valid_mistakes_count = true;
       }
+      // Optimisation.
+      if (not curr_has_valid_mistakes_count and prev_has_valid_mistakes_count)
+        return previous;
+
       pre_previous = previous;
       previous = current;
-      // Optimisation.
-      if (not curr_has_valid_mistakes_count) return previous;
+      prev_has_valid_mistakes_count = curr_has_valid_mistakes_count;
     }
 
     return previous;
@@ -234,6 +241,7 @@ void InteractWithTextCommands(std::istream& in, std::ostream& out) {
     std::transform(line.begin(), line.end(), line.begin(),
                    [](unsigned char c) { return std::tolower(c); });
     std::set<std::string> res = trie.Similar(line);
+
     if (res.empty()) {
       std::cout << line << " - ?" << std::endl;
       continue;
